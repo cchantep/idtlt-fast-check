@@ -1,0 +1,54 @@
+{
+  "name": "idonttrustlikethat-fast-check",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "idonttrustlikethat-fast-check is a plugin designed for fast-check. It convert idonttrustlikethat validators to fast-check arbitraries. Allowing the possibility to use idtlt validators with fast-check.",
+  "keywords": ["idonttrustlikethat", "idtlt", "fast-check", "@fast-check", "plugin"],
+  "author": "Alexandre Oger <oger.alexandre@gmail.com>",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/main.js",
+      "require": "./dist/main.cjs.js"
+    }
+  },
+  "main": "./dist/main.cjs.js",
+  "module": "./dist/main.js",
+  "typings": "./dist/main.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:watch": "tsc && vite build --watch",
+    "preview": "vite preview",
+    "lint": "eslint src test && yarn prettier . --check && oxlint -A all",
+    "format": "eslint src test --fix && yarn prettier . --write && oxlint -A all --fix",
+    "test": "vitest --typecheck",
+    "test:ui": "vitest --ui --typecheck",
+    "coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "fast-check": "3.14.0",
+    "idonttrustlikethat": "2.1.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "11.1.5",
+    "@types/node": "20.10.4",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitest/coverage-v8": "1.0.4",
+    "@vitest/ui": "1.0.4",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "oxlint": "0.0.20",
+    "prettier": "3.1.1",
+    "rollup-plugin-typescript-paths": "1.4.0",
+    "tslib": "2.6.2",
+    "typescript": "5.2.2",
+    "vite": "5.0.8",
+    "vitest": "1.0.4"
+  }
+}
