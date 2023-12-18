@@ -1,4 +1,3 @@
-
 # idonttrustlikethat-fast-check
 
 **idonttrustlikethat-fast-check** is a plugin designed for [fast-check](https://fast-check.dev/). It convert [idonttrustlikethat](https://github.com/AlexGalays/idonttrustlikethat) validators to **fast-check** arbitraries. Allowing the possibility to use idtlt validators with fast-check.
@@ -23,7 +22,7 @@ yarn add idonttrustlikethat-fast-check          # yarn
 bun add idonttrustlikethat-fast-check           # bun
 
 pnpm add idonttrustlikethat-fast-check          # pnpm
-``````
+```
 
 ## Basic usage
 
@@ -36,19 +35,30 @@ import { inputOf } from 'idonttrustlikethat-fast-check'
 
 const stringArbitrary = inputOf(string)
 
-fc.assert(fc.property(stringArbitrary, (v) => {
+fc.assert(
+  fc.property(stringArbitrary, (v) => {
     // Examples of generated values: "JT>\"C9k", "h]iD\"27;", "S", "n\\Ye", ""…
 
     return string.validate(v).ok
-}))
+  })
+)
 ```
 
 ## Examples
+
 Here's a basic example demonstrating the usage of `inputOf`:
 
 ```typescript
 import fc from 'fast-check'
-import { object, array, string, isoDate, boolean, union, literal } from 'idonttrustlikethat'
+import {
+  object,
+  array,
+  string,
+  isoDate,
+  boolean,
+  union,
+  literal,
+} from 'idonttrustlikethat'
 import { inputOf } from 'idonttrustlikethat-fast-check'
 
 // Define a validator
@@ -62,7 +72,7 @@ const validator = array(
         created: isoDate,
         tag: union(literal('bunny'), literal('pony'), literal('fox')),
         content: string,
-        published: boolean
+        published: boolean,
       })
     ),
   })
@@ -72,7 +82,6 @@ const validator = array(
 const arbitrary = inputOf(validator)
 
 fc.assert(fc.property(arbitrary, (v) => validator.validate(v).ok))
-
 ```
 
 Example of generated values:
@@ -217,15 +226,10 @@ The following validators are not supported:
 
 ```
 - discriminatedUnion
-- default
 - and
 - then
 - recursion
 - minSize
-- url
-- booleanFromString
-- numberFromString
-- intFromString
 ```
 
 ## Contributing

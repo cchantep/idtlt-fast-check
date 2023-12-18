@@ -33,25 +33,50 @@ type AllowedInput =
   | Validator<typeof intersection>
   | Validator<typeof literal>
 
-
 type OfType<T> = T extends Validator<infer U> ? U : never
 
 type Arb<T extends AllowedInput> = Arbitrary<OfType<T>>
 
+function __injectDefaultValue<T extends AllowedInput, U>(
+  arb: Arb<T>,
+  defaultValue: U
+): Arb<T> {
+  return fc.option(arb, { nil: defaultValue }) as Arb<T>
+}
+
 function matchArbitrary<T extends AllowedInput>(validator: T): Arb<T> {
-  const defaultValue = fc.constantFrom(undefined)
+  const defaultValue = fc.constant(undefined)
 
   switch (true) {
     case validator.meta.tag === 'null': {
-      return fc.constantFrom(null) as Arb<T>
+      return fc.constant(null) as Arb<T>
     }
 
     case validator.meta.tag === 'undefined': {
-      return fc.constantFrom(undefined) as Arb<T>
+      return fc.constant(undefined) as Arb<T>
     }
 
     case validator.meta.tag === 'number': {
       return fc.integer() as Arb<T>
+    }
+
+    case validator.meta.tag === 'string' &&
+      validator.meta.logicalType === 'integer': {
+      return fc.integer().map((v) => `${v}`) as Arb<T>
+    }
+
+    case validator.meta.tag === 'string' &&
+      validator.meta.logicalType === 'absoluteUrl': {
+      const urlRegex = /^((http:|https:)(\/\/))(\w)+(\.)+([a-z])+$/
+
+      return fc.stringMatching(urlRegex) as Arb<T>
+    }
+
+    case validator.meta.tag === 'string' &&
+      validator.meta.logicalType === 'number': {
+      return fc
+        .oneof(fc.float({ noNaN: true }), fc.integer())
+        .map((v) => `${v}`) as Arb<T>
     }
 
     case validator.meta.tag === 'string': {
@@ -69,7 +94,7 @@ function matchArbitrary<T extends AllowedInput>(validator: T): Arb<T> {
     case Object.hasOwn(validator, 'literal'): {
       const v = validator as unknown as { literal: string }
 
-      return fc.constantFrom(v.literal) as Arb<T>
+      return fc.constant(v.literal) as Arb<T>
     }
 
     case validator.meta.tag === 'object' ||
@@ -123,6 +148,10 @@ function inputOf<T extends AllowedInput>(validator: T): Arb<T> {
     return fc.option(arb, { nil: undefined }) as Arb<T>
   } else if (validator.meta.nullable) {
     return fc.option(arb, { nil: null }) as Arb<T>
+  }
+
+  if (validator.meta.default) {
+    return __injectDefaultValue(arb, validator.meta.default) as Arb<T>
   }
 
   return arb as Arb<T>
@@ -206,4 +235,10 @@ function __guessTupleTypes<T extends AllowedInput>(
   return inferredTypes
 }
 
-export { inputOf, __guessTupleTypes, __guessTupleLength, __mapTypeToIdtltType }
+export {
+  inputOf,
+  __injectDefaultValue,
+  __guessTupleTypes,
+  __guessTupleLength,
+  __mapTypeToIdtltType,
+}

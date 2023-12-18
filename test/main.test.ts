@@ -14,12 +14,20 @@ import {
   intersection,
   unknown,
   isoDate,
+  discriminatedUnion,
+  Ok,
+  Err,
+  absoluteUrl,
+  booleanFromString,
+  numberFromString,
+  intFromString,
 } from 'idonttrustlikethat'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import {
   __guessTupleLength,
   __guessTupleTypes,
+  __injectDefaultValue,
   __mapTypeToIdtltType,
   inputOf,
 } from '../src/main'
@@ -35,7 +43,7 @@ describe('inputOf primitives', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt undefined to fc undefined', () => {
+  it('can convert idtlt undefined to fc fc.constant(undefined)', () => {
     const validator = idtltUndefined
     const result = inputOf(validator)
 
@@ -44,7 +52,7 @@ describe('inputOf primitives', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt string to fc.string', () => {
+  it('can convert idtlt string to fc.string()', () => {
     const validator = string
     const result = inputOf(validator)
 
@@ -53,7 +61,16 @@ describe('inputOf primitives', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional string to fc.option', () => {
+  it('can convert idtlt string with `default` to fc.string()', () => {
+    const validator = string.default(':(')
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<string>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+
+  it('can convert idtlt optional string to fc.option()', () => {
     const validator = string.optional()
     const result = inputOf(validator)
 
@@ -62,7 +79,7 @@ describe('inputOf primitives', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional string to fc.option', () => {
+  it('can convert idtlt optional string to fc.option()', () => {
     const validator = string.nullable()
     const result = inputOf(validator)
 
@@ -71,7 +88,7 @@ describe('inputOf primitives', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt number to fc.number', () => {
+  it('can convert idtlt number to fc.integer()', () => {
     const validator = number
     const result = inputOf(validator)
 
@@ -80,7 +97,7 @@ describe('inputOf primitives', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional number to fc.option', () => {
+  it('can convert idtlt optional number to fc.option()', () => {
     const validator = number.optional()
     const result = inputOf(validator)
 
@@ -91,7 +108,7 @@ describe('inputOf primitives', () => {
 })
 
 describe('inputOf tagged string/number', () => {
-  it('can convert idtlt tagged string to fc.string', () => {
+  it('can convert idtlt tagged string to fc.string()', () => {
     type UserId = string & { __tag: 'UserId' }
     const validator = string.tagged<UserId>()
     const result = inputOf(validator)
@@ -101,7 +118,7 @@ describe('inputOf tagged string/number', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional tagged string to fc.option', () => {
+  it('can convert idtlt optional tagged string to fc.option()', () => {
     type UserId = string & { __tag: 'UserId' }
     const validator = string.tagged<UserId>().optional()
 
@@ -112,7 +129,7 @@ describe('inputOf tagged string/number', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt tagged number to fc.number', () => {
+  it('can convert idtlt tagged number to fc.number()', () => {
     type UserId = number & { __tag: 'UserId' }
     const validator = number.tagged<UserId>()
     const result = inputOf(validator)
@@ -122,7 +139,7 @@ describe('inputOf tagged string/number', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional tagged number to fc.option', () => {
+  it('can convert idtlt optional tagged number to fc.option()', () => {
     type UserId = number & { __tag: 'UserId' }
     const validator = number.tagged<UserId>().optional()
     const result = inputOf(validator)
@@ -134,7 +151,7 @@ describe('inputOf tagged string/number', () => {
 })
 
 describe('inputOf literal', () => {
-  it('can convert idtlt literal to fc.string', () => {
+  it('can convert idtlt literal to fc.string()', () => {
     const validator = literal('foo')
     const result = inputOf(validator)
 
@@ -143,7 +160,7 @@ describe('inputOf literal', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional literal to fc.option', () => {
+  it('can convert idtlt optional literal to fc.option()', () => {
     const validator = literal('foo').optional()
     const result = inputOf(validator)
 
@@ -154,7 +171,7 @@ describe('inputOf literal', () => {
 })
 
 describe('inputOf object', () => {
-  it('can convert idtlt object to fc.record', () => {
+  it('can convert idtlt object to fc.record()', () => {
     const validator = object({
       id: string,
     })
@@ -165,7 +182,7 @@ describe('inputOf object', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional object to fc.option', () => {
+  it('can convert idtlt optional object to fc.option()', () => {
     const validator = object({
       id: string,
     }).optional()
@@ -176,7 +193,7 @@ describe('inputOf object', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt complex object to fc.record', () => {
+  it('can convert idtlt complex object to fc.record()', () => {
     const validator = idtltNotification
     const result = inputOf(validator)
 
@@ -187,7 +204,7 @@ describe('inputOf object', () => {
 })
 
 describe('inputOf array', () => {
-  it('can convert idtlt array to fc.array', () => {
+  it('can convert idtlt array to fc.array()', () => {
     const validator = array(number)
     const result = inputOf(validator)
 
@@ -196,7 +213,7 @@ describe('inputOf array', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt array of object to fc.array', () => {
+  it('can convert idtlt array of object to fc.array()', () => {
     const validator = array(idtltNotification)
     const result = inputOf(validator)
 
@@ -207,7 +224,7 @@ describe('inputOf array', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional array to fc.option', () => {
+  it('can convert idtlt optional array to fc.option()', () => {
     const validator = array(number).optional()
     const result = inputOf(validator)
 
@@ -218,7 +235,7 @@ describe('inputOf array', () => {
 })
 
 describe('inputOf dictionary', () => {
-  it('can convert idtlt dictionary to fc.dictionary', () => {
+  it('can convert idtlt dictionary to fc.dictionary()', () => {
     const validator = dictionary(string, number)
     const result = inputOf(validator)
 
@@ -227,7 +244,7 @@ describe('inputOf dictionary', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt dictionary of string and object to fc.dictionary', () => {
+  it('can convert idtlt dictionary of string and object to fc.dictionary()', () => {
     const validator = dictionary(string, idtltNotification)
     const result = inputOf(validator)
 
@@ -238,7 +255,7 @@ describe('inputOf dictionary', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional dictionary to fc.option', () => {
+  it('can convert idtlt optional dictionary to fc.option()', () => {
     const validator = dictionary(string, number).optional()
     const result = inputOf(validator)
 
@@ -252,7 +269,7 @@ describe('inputOf dictionary', () => {
 
 describe('inputOf tuple', () => {
   // Works only for primitive value
-  it('can convert idtlt tuple of primitive to fc.tuple', () => {
+  it('can convert idtlt tuple of primitive to fc.tuple()', () => {
     const validator = tuple(string, number)
     const result = inputOf(validator)
 
@@ -261,7 +278,7 @@ describe('inputOf tuple', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional tuple of primitive to fc.option', () => {
+  it('can convert idtlt optional tuple of primitive to fc.option()', () => {
     const validator = tuple(string, number).optional()
     const result = inputOf(validator)
 
@@ -273,7 +290,7 @@ describe('inputOf tuple', () => {
 
 describe('inputOf union', () => {
   // Works only for primitive value
-  it('can convert idtlt union to fc.oneof', () => {
+  it('can convert idtlt union to fc.oneof()', () => {
     const validator = union(string, number)
     const result = inputOf(validator)
 
@@ -282,7 +299,7 @@ describe('inputOf union', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt union to fc.oneof', () => {
+  it('can convert idtlt union to fc.oneof()', () => {
     const validator = union(idtltLocation, idtltInfo)
     const result = inputOf(validator)
 
@@ -293,7 +310,7 @@ describe('inputOf union', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional union to fc.option', () => {
+  it('can convert idtlt optional union to fc.option()', () => {
     const validator = union(
       object({ foo: number }),
       object({ bar: string })
@@ -309,7 +326,7 @@ describe('inputOf union', () => {
 })
 
 describe('inputOf intersection', () => {
-  it('can convert idtlt intersection of object to fc.record', () => {
+  it('can convert idtlt intersection of object to fc.record()', () => {
     const validator = intersection(
       object({ foo: number }),
       object({ bar: string })
@@ -321,7 +338,7 @@ describe('inputOf intersection', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt intersection of complexe object to fc.record', () => {
+  it('can convert idtlt intersection of complexe object to fc.record()', () => {
     const validator = intersection(idtltInfo, idtltNotification)
     const result = inputOf(validator)
 
@@ -332,7 +349,7 @@ describe('inputOf intersection', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional intersection to fc.option', () => {
+  it('can convert idtlt optional intersection to fc.option()', () => {
     const validator = intersection(
       object({ foo: number }),
       object({ bar: string })
@@ -348,7 +365,7 @@ describe('inputOf intersection', () => {
 })
 
 describe('inputOf unknown', () => {
-  it('can convert idtlt unknown to fc.constantFrom', () => {
+  it('can convert idtlt unknown to fc.constantFrom()', () => {
     const validator = unknown
     const result = inputOf(validator)
 
@@ -359,7 +376,7 @@ describe('inputOf unknown', () => {
 })
 
 describe('inputOf boolean', () => {
-  it('can convert idtlt boolean to fc.boolean', () => {
+  it('can convert idtlt boolean to fc.boolean()', () => {
     const validator = boolean
     const result = inputOf(validator)
 
@@ -368,7 +385,7 @@ describe('inputOf boolean', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional boolean to fc.option', () => {
+  it('can convert idtlt optional boolean to fc.option()', () => {
     const validator = boolean.optional()
     const result = inputOf(validator)
 
@@ -388,11 +405,91 @@ describe('inputOf isoDate', () => {
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
 
-  it('can convert idtlt optional isoDate to fc.option', () => {
+  it('can convert idtlt optional isoDate to fc.option()', () => {
     const validator = isoDate.optional()
     const result = inputOf(validator)
 
     expectTypeOf(result).toEqualTypeOf<Arbitrary<Date | undefined>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+})
+
+describe('inputOf absoluteUrl', () => {
+  it('can convert idtlt absoluteUrl to object to fc.stringMatching()', () => {
+    const validator = absoluteUrl
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+
+  it('can convert idtlt absoluteUrl to object to fc.option()', () => {
+    const validator = absoluteUrl.optional()
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+})
+
+describe('inputOf booleanFromString', () => {
+  it('can convert idtlt booleanFromString to fc.boolean()', () => {
+    const validator = booleanFromString
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+
+  it('can convert idtlt booleanFromString to fc.boolean()', () => {
+    const validator = booleanFromString.optional()
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+})
+
+describe('inputOf numberFromString', () => {
+  it('can convert idtlt numberFromString to fc.oneOf(fc.float, fc.integer)', () => {
+    const validator = numberFromString
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+
+  it('can convert idtlt numberFromString to fc.oneOf(fc.float, fc.integer)', () => {
+    const validator = numberFromString.optional()
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+})
+
+describe('inputOf intFromString', () => {
+  it('can convert idtlt intFromString to fc.boolean()', () => {
+    const validator = intFromString
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => validator.validate(v).ok))
+  })
+
+  it('can convert idtlt intFromString to fc.boolean()', () => {
+    const validator = intFromString.optional()
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
 
     fc.assert(fc.property(result, (v) => validator.validate(v).ok))
   })
@@ -434,7 +531,7 @@ describe('inputOf no passing tests', () => {
     fc.assert(fc.property(result, (v) => !validator.validate(v).ok))
   })
 
-  it('can not convert idtlt tuple of literal to fc.tuple', () => {
+  it('can not convert idtlt tuple of literal to fc.tuple()', () => {
     const validator = tuple(literal('foo'), literal('bar'))
     const result = inputOf(validator)
 
@@ -468,6 +565,41 @@ describe('inputOf no passing tests', () => {
 
     expect(types).toHaveLength(0)
   })
+
+  it('can not convert idtlt discriminatedUnion to fc.union()', () => {
+    const userSending = object({
+      type: literal('sending'),
+    })
+
+    const userEditing = object({
+      type: literal('editing'),
+      currentText: string,
+    })
+
+    const validator = discriminatedUnion('type', userSending, userEditing)
+    const result = inputOf(validator)
+
+    expectTypeOf(result).toEqualTypeOf<Arbitrary<typeof validator.T>>
+
+    fc.assert(fc.property(result, (v) => !validator.validate(v).ok))
+  })
+
+  it('can not convert string validator with `and` operator to arb', () => {
+    const validator = string.and((str) =>
+      str.length > 3 ? Ok(str) : Err("No, that just won't do")
+    )
+    const arb = inputOf(validator)
+
+    fc.assert(
+      fc.property(arb, (v) => {
+        if (v.length > 3) {
+          return validator.validate(v).ok
+        } else {
+          return !validator.validate(v).ok
+        }
+      })
+    )
+  })
 })
 
 describe('example from the README.md', () => {
@@ -482,7 +614,7 @@ describe('example from the README.md', () => {
             created: isoDate,
             tag: union(literal('bunny'), literal('pony'), literal('fox')),
             content: string,
-            published: boolean
+            published: boolean,
           })
         ),
       })
@@ -490,19 +622,46 @@ describe('example from the README.md', () => {
 
     const arbitrary = inputOf(validator)
 
-    fc.assert(
-      fc.property(
-        arbitrary,
-        (v) => {
-          console.log(JSON.stringify(v, null, 2))
-          return validator.validate(v).ok
-        }
-      )
-    )
+    fc.assert(fc.property(arbitrary, (v) => validator.validate(v).ok))
   })
 })
 
 describe('private function tests', () => {
+  it('can convert string validator with default to fc.option()', () => {
+    const defaultVal = 'default value'
+    const validator = string.default(defaultVal)
+    const arbWithDefault = __injectDefaultValue(fc.string(), defaultVal)
+
+    fc.assert(
+      fc.property(arbWithDefault, (v) => {
+        if (v === defaultVal) {
+          return true
+        } else {
+          return validator.validate(v).ok
+        }
+      })
+    )
+  })
+
+  it('can convert object validator with default to fc.option()', () => {
+    const defaultVal = 'default value'
+    const validator = object({ foo: string }).default(defaultVal)
+    const arbWithDefault = __injectDefaultValue(
+      fc.record({ foo: fc.string() }),
+      defaultVal
+    )
+
+    fc.assert(
+      fc.property(arbWithDefault, (v) => {
+        if (v === defaultVal) {
+          return true
+        } else {
+          return validator.validate(v).ok
+        }
+      })
+    )
+  })
+
   it('can find the tuple length', () => {
     const validator = tuple(string, number, boolean)
     const length = __guessTupleLength(validator)

@@ -19,7 +19,6 @@ export default defineConfig({
     port: 3000,
   },
   build: {
-    manifest: true,
     minify: true,
     reportCompressedSize: true,
     lib: {
